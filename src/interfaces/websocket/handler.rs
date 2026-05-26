@@ -1,54 +1,66 @@
+use std::{str::FromStr, time::Instant};
+
 use axum::{
-    extract::ws::{
+    extract::{ws::{
         Message,
         WebSocket,
         WebSocketUpgrade,
-    },
+    }, State},
     response::IntoResponse,
 };
+use crate::{interfaces::websocket::dto::esp_message::EspMessage, shared::state::{AppState, ControllerType, MachineState, SectorType}};
 
-//assim que tem que ser
-//retirar trecho abaixo até onde tiver segundo comentario
-use serde::Deserialize;//tirar isso daqui depois
-#[derive(Debug, Deserialize)]
-struct EspMessage{
-    machine_id: Option<String>,
-    event: Option<String>,
-}
-//retirar trecho acima até onde tiver segundo comentario
-//
 pub async fn websocket_handler(
     ws: WebSocketUpgrade,
+    State(state): State<AppState>
 ) -> impl IntoResponse {
 
-    ws.on_upgrade(handle_socket)
+    ws.on_upgrade(move |socket| {
+        handle_socket(socket, state)
+
+    })
 }
 
 async fn handle_socket(
     mut socket: WebSocket,
+    state: AppState
 ) {
-
-    println!("Cliente conectado!");
-
     while let Some(result) = socket.recv().await {
 
         match result {
 
             Ok(Message::Text(text)) => {
-                println!("Recebido bruto: {}", text);
-
+                let mut machines = state.machines.lock().await;
                     match serde_json::from_str::<EspMessage>(&text) {
-
-                        Ok(data) => {
-
-                            println!("Machine ID: {:?}", data.machine_id);
-
-                            println!("Event: {:?}", data.event);
-
+                        Ok(message) =>{
+                        match message{
+                            EspMessage::Identify {id, sector, controller, ip, mac, timestamp, payload} => {
+                                let controller: ControllerType = controller.parse().unwrap();
+                                let sector: SectorType = sector.parse().unwrap();
+                                let last_seen:Instant = Instant::now();
+                                machines.insert(id.clone(), MachineState{
+                                    id, sector, controller, ip, mac, timestamp, last_seen
+                                });
+                            }
+                            EspMessage::Heartbeat {id, sector, controller, ip, mac, timestamp, payload} => {
+                                let controller: ControllerType = controller.parse().unwrap();
+                                let sector: SectorType = sector.parse().unwrap();
+                                let last_seen:Instant = Instant::now();
+                                machines.insert(id.clone(), MachineState{
+                                    id, sector, controller, ip, mac, timestamp, last_seen
+                                });
+                            }
+                            EspMessage::SignalReceived {..} => {
+                                println!("SignalReceived:{:?}", message)
+                            }
                         }
-
+                    }
+                        //
+                        // Ok(data) => {
+                        //     println!("Recebido: {:?}", data);
+                        // }
+                        //
                         Err(_) => {
-
                             println!("Mensagem simples: {}", text);
                         }
                     }

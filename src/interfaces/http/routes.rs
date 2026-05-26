@@ -5,6 +5,7 @@ use axum::{
 
 use crate::{interfaces::http::handlers::{contador::{decrement_contador, increment_contador}, egestor::{criar_contato, listar_contatos}, hello::helloo}, shared::state::AppState};
 use crate::interfaces::websocket::handler::websocket_handler;
+use crate::interfaces::http::handlers::machines::{get_machines,};
 
 pub fn create_router(state: AppState) -> Router {
     Router::new()
@@ -13,6 +14,9 @@ pub fn create_router(state: AppState) -> Router {
         .route("/egestor/contatos", post(criar_contato))
         .route("/contador/increment/{quantidade}", post(increment_contador))
         .route("/contador/decrement/{quantidade}", post(decrement_contador))
+        .route("/machines", get(get_machines))
+        // .route("/machines/online", get())
+        // .route("/machines/offline", get())
         .route("/ws", get(websocket_handler))
         .with_state(state)
 }
