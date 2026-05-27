@@ -3,9 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::domain::egestor::contato::entity::{ContatoCriadoResponse, ContatosResponse};
 
-use crate::domain::egestor::contato::{
-    dto::CriarContatoDTO,
-};
+use crate::interfaces::http::dto::egestor_criar_contato::CriarContatoDTO;
 
 #[derive(Clone)]
 pub struct EgestorClient {

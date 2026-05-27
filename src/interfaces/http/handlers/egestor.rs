@@ -6,11 +6,11 @@ use axum::{
 // use serde_json::Value;
 use crate::{
     domain::egestor::contato::{
-        dto::CriarContatoDTO,
         entity::ContatoCriadoResponse,
     },
     shared::state::AppState,
 };
+use crate::interfaces::http::dto::egestor_criar_contato::CriarContatoDTO;
 use crate::{domain::egestor::contato::entity::ContatosResponse};
 
 pub async fn listar_contatos(

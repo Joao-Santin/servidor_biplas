@@ -8,7 +8,11 @@ use axum::{
     }, State},
     response::IntoResponse,
 };
-use crate::{interfaces::websocket::dto::esp_message::EspMessage, shared::state::{AppState, ControllerType, MachineState, SectorType}};
+use crate::{interfaces::websocket::dto::esp_message::EspMessage, shared::state::{AppState}};
+
+use crate::domain::machine::machine_state::MachineState;
+use crate::domain::machine::sector_type::SectorType;
+use crate::domain::machine::controller_type::ControllerType;
 
 pub async fn websocket_handler(
     ws: WebSocketUpgrade,
