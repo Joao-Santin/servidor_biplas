@@ -8,7 +8,7 @@ pub struct MachineState{
     pub controller: ControllerType,
     pub ip: String,
     pub mac: String,
-    pub timestamp: u64,
+    pub timestamp: i64,
     pub last_seen: Instant,
 }
 

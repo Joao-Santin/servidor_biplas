@@ -8,7 +8,7 @@ pub struct MachineResponse {
     pub sector: String,
     pub controller: String,
     pub online: bool,
-    pub timestamp: u64,
+    pub timestamp: i64,
     pub ip: String,
     pub mac: String,
 }

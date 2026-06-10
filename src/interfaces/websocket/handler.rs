@@ -13,6 +13,7 @@ use crate::{interfaces::websocket::dto::esp_message::EspMessage, shared::state::
 use crate::domain::machine::machine_state::MachineState;
 use crate::domain::machine::sector_type::SectorType;
 use crate::domain::machine::controller_type::ControllerType;
+use crate::infrastructure::services::bd_sql::machine_repository::MachineRepository;
 
 pub async fn websocket_handler(
     ws: WebSocketUpgrade,
@@ -42,11 +43,34 @@ async fn handle_socket(
                                 let controller: ControllerType = controller.parse().unwrap();
                                 let sector: SectorType = sector.parse().unwrap();
                                 let last_seen:Instant = Instant::now();
-                                machines.insert(id.clone(), MachineState{
+                                let machine:MachineState = MachineState{
                                     id, sector, controller, ip, mac, timestamp, last_seen
-                                });
+                                };
+
+                                if let Err(err) =
+                                    MachineRepository::upsert_machine(
+                                        &state.database,
+                                        &machine,
+                                    )
+                                    .await
+                                    {
+                                        println!("{:?}", err);
+                                    }
+                                // machines.insert(id.clone(), MachineState{
+                                    // id, sector, controller, ip, mac, timestamp, last_seen
+                                // });
                             }
                             EspMessage::Heartbeat {id, sector, controller, ip, mac, timestamp, payload} => {
+                                let row =
+                                sqlx::query(
+                                    "SELECT NOW()"
+                                )
+                                .fetch_one(
+                                    &state.database
+                                )
+                                .await;
+
+println!("{:?}", row);
                                 let controller: ControllerType = controller.parse().unwrap();
                                 let sector: SectorType = sector.parse().unwrap();
                                 let last_seen:Instant = Instant::now();

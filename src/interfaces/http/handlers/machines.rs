@@ -1,43 +1,21 @@
-use crate::shared::state::AppState;
-use axum::{extract::{State}, Json};
+use crate::{infrastructure::services::bd_sql::machine_repository::MachineRepository, interfaces::http::dto::machine_query::MachineQuery, shared::state::AppState};
+use axum::{extract::{State, Query}, Json};
 use crate::interfaces::http::dto::machine_response::MachineResponse;
+use crate::domain::machine::machine_status::MachineStatus;
 
-pub async fn get_machines(State(state): State<AppState>)->Json<Vec<MachineResponse>>{
-    let machines = state.machines.lock().await;
-    let response: Vec<MachineResponse> = machines.values().map(MachineResponse::from).collect();
-    Json(response)
+pub async fn get_machines(State(state): State<AppState>, Query(query): Query<MachineQuery>)->Json<Vec<MachineResponse>>{
+    let status = MachineStatus::by_option_bool(
+        query.online
+    );
+    match MachineRepository::find(&state.database, status).await{
+        Ok(machines) => {
+            let response: Vec<MachineResponse> = machines.iter().map(MachineResponse::from).collect();
+            Json(response)
+        }
+        Err(err)=>{
+            println!("{:?}", err);
+            Json(Vec::new())
+        }
+    }
 }
 
-pub async fn get_online_machines(
-    State(state): State<AppState>
-) -> Json<Vec<MachineResponse>> {
-
-    let machines =
-        state.machines.lock().await;
-
-    let response: Vec<MachineResponse> =
-        machines
-            .values()
-            .filter(|machine| machine.is_online())
-            .map(MachineResponse::from)
-            .collect();
-
-    Json(response)
-}
-
-pub async fn get_offline_machines(
-    State(state): State<AppState>
-) -> Json<Vec<MachineResponse>> {
-
-    let machines =
-        state.machines.lock().await;
-
-    let response: Vec<MachineResponse> =
-        machines
-            .values()
-            .filter(|machine| !machine.is_online())
-            .map(MachineResponse::from)
-            .collect();
-
-    Json(response)
-}

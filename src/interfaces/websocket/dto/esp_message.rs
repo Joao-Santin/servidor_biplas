@@ -11,7 +11,7 @@ pub enum EspMessage {
         controller: String,
         ip: String,
         mac: String,
-        timestamp: u64,
+        timestamp: i64,
         payload: IdentifyPayload,
     },
 
@@ -22,7 +22,7 @@ pub enum EspMessage {
         controller: String,
         ip: String,
         mac: String,
-        timestamp: u64,
+        timestamp: i64,
         payload: HeartbeatPayload,
     },
 
@@ -33,7 +33,7 @@ pub enum EspMessage {
         controller: String,
         ip: String,
         mac: String,
-        timestamp: u64,
+        timestamp: i64,
         payload: SignalPayload,
     },
 }
