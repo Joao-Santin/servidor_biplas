@@ -1,6 +1,5 @@
 use crate::domain::machine::sector_type::SectorType;
 use crate::domain::machine::controller_type::ControllerType;
-use std::time::Instant;
 
 pub struct MachineState{
     pub id: String,
@@ -9,11 +8,6 @@ pub struct MachineState{
     pub ip: String,
     pub mac: String,
     pub timestamp: i64,
-    pub last_seen: Instant,
+    pub online: bool,
 }
 
-impl MachineState{
-    pub fn is_online(&self) -> bool{
-        self.last_seen.elapsed().as_secs() < 15
-    }
-}

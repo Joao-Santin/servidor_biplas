@@ -20,7 +20,7 @@ impl From<&MachineState> for MachineResponse{
             id: machine.id.clone(),
             sector: machine.sector.to_string(),
             controller: machine.controller.to_string(),
-            online: machine.is_online(),
+            online: machine.online,
             timestamp: machine.timestamp.clone(),
             ip: machine.ip.clone(),
             mac: machine.mac.clone()

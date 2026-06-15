@@ -1,15 +1,14 @@
 use sqlx::{PgPool, Row};
-use std::time::Instant;
 use crate::domain::machine::machine_state::MachineState;
 use crate::domain::machine::machine_status::MachineStatus;
 
 pub struct MachineRepository;
 impl MachineRepository {
 
-    pub async fn upsert_machine(
+   pub async fn upsert_machine(
         pool: &PgPool,
         machine: &MachineState,
-    ) -> Result<(), sqlx::Error> {
+        ) -> Result<(), sqlx::Error> {
 
         sqlx::query(
             "
@@ -58,6 +57,25 @@ impl MachineRepository {
 
         Ok(())
     }
+    pub async fn update_online_status(
+        pool: &PgPool,
+    ) -> Result<(), sqlx::Error> {
+
+        sqlx::query(
+            "
+            UPDATE machines
+            SET online = false
+            WHERE
+                online = true
+                AND NOW() - last_heartbeat >= interval '15 seconds'
+            "
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn find(
         pool: &PgPool,
         filter: MachineStatus,
@@ -88,7 +106,6 @@ impl MachineRepository {
             .fetch_all(pool)
             .await?;
 
-        // map para MachineState...
         let machines = rows
             .into_iter()
             .map(|row| {
@@ -100,7 +117,7 @@ impl MachineRepository {
                     ip: row.get("ip"),
                     mac: row.get("mac"),
                     timestamp: row.get::<i64,_>("last_timestamp"),
-                    last_seen: Instant::now(),
+                    online: row.get("online"),
                 }
 
             })

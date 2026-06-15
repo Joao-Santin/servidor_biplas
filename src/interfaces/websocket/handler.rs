@@ -35,16 +35,32 @@ async fn handle_socket(
         match result {
 
             Ok(Message::Text(text)) => {
-                let mut machines = state.machines.lock().await;
                     match serde_json::from_str::<EspMessage>(&text) {
                         Ok(message) =>{
                         match message{
                             EspMessage::Identify {id, sector, controller, ip, mac, timestamp, payload} => {
                                 let controller: ControllerType = controller.parse().unwrap();
                                 let sector: SectorType = sector.parse().unwrap();
-                                let last_seen:Instant = Instant::now();
                                 let machine:MachineState = MachineState{
-                                    id, sector, controller, ip, mac, timestamp, last_seen
+                                    id, sector, controller, ip, mac, timestamp, online:true
+                                };
+
+                                if let Err(err) =
+                                    MachineRepository::upsert_machine(
+                                        &state.database,
+                                        &machine,
+                                    )
+                                    .await
+                                    {
+                                        println!("{:?}", err);
+                                    }
+                            }
+                            EspMessage::Heartbeat {id, sector, controller, ip, mac, timestamp, payload} => {
+
+                                let controller: ControllerType = controller.parse().unwrap();
+                                let sector: SectorType = sector.parse().unwrap();
+                                let machine:MachineState = MachineState{
+                                    id, sector, controller, ip, mac, timestamp, online: true
                                 };
 
                                 if let Err(err) =
@@ -57,26 +73,8 @@ async fn handle_socket(
                                         println!("{:?}", err);
                                     }
                                 // machines.insert(id.clone(), MachineState{
-                                    // id, sector, controller, ip, mac, timestamp, last_seen
+                                //     id, sector, controller, ip, mac, timestamp, last_seen
                                 // });
-                            }
-                            EspMessage::Heartbeat {id, sector, controller, ip, mac, timestamp, payload} => {
-                                let row =
-                                sqlx::query(
-                                    "SELECT NOW()"
-                                )
-                                .fetch_one(
-                                    &state.database
-                                )
-                                .await;
-
-println!("{:?}", row);
-                                let controller: ControllerType = controller.parse().unwrap();
-                                let sector: SectorType = sector.parse().unwrap();
-                                let last_seen:Instant = Instant::now();
-                                machines.insert(id.clone(), MachineState{
-                                    id, sector, controller, ip, mac, timestamp, last_seen
-                                });
                             }
                             EspMessage::SignalReceived {..} => {
                                 println!("SignalReceived:{:?}", message)
